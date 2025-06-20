@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<YtDlpSettings>
+    <Format>bestaudio</Format>
+    <ExtractAudio>true</ExtractAudio>
+    <AudioFormat>mp3</AudioFormat>
+    <AudioQuality>0</AudioQuality>
+    <CookiesPath>C:\Users\marci\Desktop\Playlist\cookies.txt</CookiesPath>
+    <FfmpegLocation>C:\Path\To\ffmpeg.exe</FfmpegLocation>
+    <OutputTemplate>C:\Downloads\%(title)s.%(ext)s</OutputTemplate>
+    <PlaylistEnd>5</PlaylistEnd>
+</YtDlpSettings>
