@@ -66,6 +66,24 @@
                                FontSize="14"
                                Foreground="Black" />
                 </Grid>
+                
+                <!-- Button 4 -->
+                <Button Content="Compress MP4 Video"
+                        Command="{Binding CompressVideoCommand}"
+                        Height="30" />
+
+                <Grid Height="25" Width="300" Margin="0,0,0,20"
+                      Visibility="{Binding IsCompressingVideo, Converter={StaticResource BoolToVis}}">
+                    <ProgressBar Height="25"
+                                 Minimum="0"
+                                 Maximum="1"
+                                 Value="{Binding VideoCompressionProgress, Mode=OneWay}" />
+                    <TextBlock Text="{Binding VideoCompressionProgressDisplay}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="14"
+                               Foreground="Black" />
+                </Grid>
             </StackPanel>
         </Grid>
     </ScrollViewer>
