@@ -5,6 +5,7 @@ using UtilityApplication.Commands;
 using UtilityApplication.FileDataHandler;
 using UtilityApplication.Interfaces;
 using UtilityApplication.PhotoProcessing;
+using UtilityApplication.VideoProcessing;
 
 namespace UtilityApplication.ViewModels
 {
@@ -25,11 +26,16 @@ namespace UtilityApplication.ViewModels
         private bool isDownloadingPlaylist;
         private bool isFixingAndTagging;
 
+        private bool isCompressingVideo;
+        private string videoCompressionProgressDisplay = string.Empty;
+        private double videoCompressionProgress;
+
         private const int MaxVideos = 5;
 
         public ICommand DownloadPlaylistCommand { get; }
         public ICommand ConvertHeicToPngCommand { get; }
         public ICommand FixAndTagMp3Command { get; }
+        public ICommand CompressVideoCommand { get; }
 
         public MainWindowViewModel(IUserDialogService dialogService)
         {
@@ -38,9 +44,10 @@ namespace UtilityApplication.ViewModels
             ConvertHeicToPngCommand = new RelayCommand(async () => await ConvertHeicToPngAsync(), CanExecuteConvert);
             DownloadPlaylistCommand = new RelayCommand(async () => await DownloadPlaylistAsync(), () => !IsBusy);
             FixAndTagMp3Command = new RelayCommand(async () => await FixAndTagMp3Async(), CanExecuteConvert);
+            CompressVideoCommand = new RelayCommand(async () => await CompressVideoAsync(), () => !IsBusy);
         }
 
-        private bool IsBusy => IsProcessing || IsDownloadingPlaylist || IsFixingAndTagging;
+        private bool IsBusy => IsProcessing || IsDownloadingPlaylist || IsFixingAndTagging || IsCompressingVideo;
 
         private int TotalFilesToConvert
         {
@@ -114,6 +121,28 @@ namespace UtilityApplication.ViewModels
             }
         }
 
+        private bool IsCompressingVideo
+        {
+            get => isCompressingVideo;
+            set
+            {
+                if (SetProperty(ref isCompressingVideo, value))
+                    RaiseCanExecuteChangedForCommands();
+            }
+        }
+
+        public string VideoCompressionProgressDisplay
+        {
+            get => videoCompressionProgressDisplay;
+            set => SetProperty(ref videoCompressionProgressDisplay, value);
+        }
+
+        public double VideoCompressionProgress
+        {
+            get => videoCompressionProgress;
+            set => SetProperty(ref videoCompressionProgress, value);
+        }
+
         private bool CanExecuteConvert() => !IsBusy;
 
         private void RaiseCanExecuteChangedForCommands()
@@ -121,6 +150,7 @@ namespace UtilityApplication.ViewModels
             (ConvertHeicToPngCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DownloadPlaylistCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (FixAndTagMp3Command as RelayCommand)?.RaiseCanExecuteChanged();
+            (CompressVideoCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private async Task ConvertHeicToPngAsync()
@@ -232,6 +262,45 @@ namespace UtilityApplication.ViewModels
 
             TotalVideosToDownload = 1;
             DownloadedVideosCount = 0;
+        }
+
+        private async Task CompressVideoAsync()
+        {
+            var inputFile = dialogService.SelectFile("Select an MP4 file to compress", "MP4 files (*.mp4)|*.mp4");
+            if (string.IsNullOrWhiteSpace(inputFile))
+                return;
+
+            var outputFile = Path.Combine(Path.GetDirectoryName(inputFile)!,
+                Path.GetFileNameWithoutExtension(inputFile) + "_compressed.mp4");
+
+            IsCompressingVideo = true;
+            VideoCompressionProgressDisplay = "Compressing...";
+            VideoCompressionProgress = 0;
+
+            var progress = new Progress<double>(p =>
+            {
+                VideoCompressionProgress = p; // 0.0-1.0 for ProgressBar.Value binding (0-100)
+                VideoCompressionProgressDisplay = $"Compressing... {(p * 100):F1}%";
+            });
+
+            try
+            {
+                var handler = new VideoProcessingHandler();
+                await handler.CompressMp4WithProgressAsync(inputFile, outputFile, progress);
+                VideoCompressionProgressDisplay = "Compression complete!";
+                VideoCompressionProgress = 1;
+            }
+            catch (Exception ex)
+            {
+                dialogService.ShowMessage($"Error during compression:\n{ex.Message}", "Error", MessageBoxImage.Error);
+                VideoCompressionProgressDisplay = "Compression failed.";
+                VideoCompressionProgress = 0;
+            }
+
+            await Task.Delay(1500);
+            IsCompressingVideo = false;
+            VideoCompressionProgressDisplay = string.Empty;
+            VideoCompressionProgress = 0;
         }
     }
 }

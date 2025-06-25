@@ -9,5 +9,7 @@ namespace UtilityApplication.Interfaces
         string? SelectFolder(string description);
 
         string? ShowInputDialog(string message, string title, string defaultValue = "");
+        
+        string? SelectFile(string title, string filter);
     }
 }

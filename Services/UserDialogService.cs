@@ -22,6 +22,19 @@ namespace UtilityApplication.Services
 
             return dialog.ShowDialog() == true ? dialog.SelectedPath : null;
         }
+        
+        public string? SelectFile(string title, string filter)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = title,
+                Filter = filter,
+                CheckFileExists = true,
+                Multiselect = false,
+            };
+
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
 
         public string? ShowInputDialog(string message, string title, string defaultValue = "")
         {
@@ -33,7 +46,7 @@ namespace UtilityApplication.Services
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 ResizeMode = ResizeMode.NoResize,
                 WindowStyle = WindowStyle.ToolWindow,
-                Owner = Application.Current?.MainWindow
+                Owner = Application.Current?.MainWindow,
             };
 
             var stackPanel = new StackPanel { Margin = new Thickness(10) };

@@ -8,7 +8,7 @@ namespace UtilityApplication.Settings;
 public class DownloadConfig
 {
     public static string OutputDirectory => @"C:\Users\marci\Desktop\Playlist";
-    private static string FfmpegLocation => @"C:\ffmpeg-2024-12-23-git-6c9218d748-full_build\bin";
+    public static string FfmpegLocation => @"C:\ffmpeg-2024-12-23-git-6c9218d748-full_build\bin";
     private static string CookiePath => @"C:\Users\marci\Desktop\Playlist\cookies.txt";
 
     /// <summary>
