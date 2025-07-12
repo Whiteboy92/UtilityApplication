@@ -9,6 +9,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Content Include="Tools\yt-dlp.exe">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
       <Page Update="Views\MainWindow.xaml">
         <Generator>MSBuild:Compile</Generator>
         <XamlRuntime>Wpf</XamlRuntime>
@@ -21,7 +27,6 @@
       <PackageReference Include="Magick.NET.Core" Version="14.6.0" />
       <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
       <PackageReference Include="TagLibSharp" Version="2.3.0" />
-      <PackageReference Include="ytdlp-executable" Version="2025.6.9" />
     </ItemGroup>
 
 </Project>

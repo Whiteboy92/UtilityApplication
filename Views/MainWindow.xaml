@@ -3,59 +3,89 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:utility="clr-namespace:UtilityApplication.Utility"
         Title="Utility App" Height="400" Width="400">
-    
+
     <Window.Resources>
         <utility:BoolToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid Margin="10">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300" >
 
-                <!-- Button 1 -->
+                <!-- Button 1: Convert HEIC to PNG -->
                 <Button Content="Convert HEIC to PNG"
                         Command="{Binding ConvertHeicToPngCommand}"
                         Height="30" />
 
-                <Grid Height="25" Width="300" Margin="0,0,0,20"
-                      Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}">
+                <!-- Always visible progress for HEIC conversion -->
+                <Grid Height="25" Width="300" Margin="0,0,0,20">
                     <ProgressBar Height="25"
                                  Minimum="0"
                                  Maximum="{Binding TotalFilesToConvert}"
-                                 Value="{Binding ProcessedFilesCount, Mode=OneWay}"
-                                 Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}" />
-
+                                 Value="{Binding ProcessedFilesCount, Mode=OneWay}" />
                     <TextBlock Text="{Binding ConversionProgressDisplay}"
                                HorizontalAlignment="Center"
-                               FontSize="14"
-                               Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}" />
+                               FontSize="14" />
                 </Grid>
 
-                <!-- Button 2 -->
+                <!-- Button 2: Download YouTube Playlist -->
                 <Button Content="Download YouTube Playlist"
                         Command="{Binding DownloadPlaylistCommand}"
                         Height="30" />
 
-                <Grid Height="25" Width="300" Margin="0,0,0,20"
-                      Visibility="{Binding IsDownloadingPlaylist, Converter={StaticResource BoolToVis}}">
-                    <ProgressBar Height="25"
-                                 Minimum="0"
-                                 Maximum="{Binding TotalVideosToDownload}"
-                                 Value="{Binding DownloadedVideosCount, Mode=OneWay}" />
-                    <TextBlock Text="{Binding DownloadProgressDisplay}"
+                <!-- Progress or last downloaded video for playlist -->
+                <Grid Height="25" Width="300" Margin="0,0,0,20">
+                    <Grid.Resources>
+                        <Style x:Key="VisibleWhenDownloadingGrid" TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDownloadingPlaylist}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+
+                        <Style x:Key="VisibleWhenNotDownloadingTextBlock" TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDownloadingPlaylist}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Resources>
+
+                    <!-- ProgressBar and overlaid text, shown while downloading -->
+                    <Grid Style="{StaticResource VisibleWhenDownloadingGrid}">
+                        <ProgressBar Height="25"
+                                     Minimum="0"
+                                     Maximum="{Binding TotalVideosToDownload}"
+                                     Value="{Binding DownloadedVideosCount, Mode=OneWay}"/>
+
+                        <TextBlock Text="{Binding DownloadProgressDisplay}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="14"
+                                   Foreground="Black" />
+                    </Grid>
+
+                    <!-- First downloaded video name, shown when not downloading -->
+                    <TextBlock Text="{Binding FirstDownloadedVideoName, TargetNullValue='Ready to download...'}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                FontSize="14"
-                               Foreground="Black" />
+                               FontStyle="Italic"
+                               Foreground="Gray"
+                               Style="{StaticResource VisibleWhenNotDownloadingTextBlock}" />
                 </Grid>
 
-                <!-- Button 3 -->
+                <!-- Button 3: Fix and Tag MP3s -->
                 <Button Content="Fix File Names And Tag MP3s"
                         Command="{Binding FixAndTagMp3Command}"
                         Height="30" />
 
-                <Grid Height="25" Width="300" Margin="0,0,0,20"
-                      Visibility="{Binding IsFixingAndTagging, Converter={StaticResource BoolToVis}}">
+                <!-- Always visible progress for fixing and tagging MP3s -->
+                <Grid Height="25" Width="300" Margin="0,0,0,20">
                     <ProgressBar Height="25"
                                  Minimum="0"
                                  Maximum="{Binding TotalFilesToFix}"
@@ -66,14 +96,14 @@
                                FontSize="14"
                                Foreground="Black" />
                 </Grid>
-                
-                <!-- Button 4 -->
+
+                <!-- Button 4: Compress MP4 Video -->
                 <Button Content="Compress MP4 Video"
                         Command="{Binding CompressVideoCommand}"
                         Height="30" />
 
-                <Grid Height="25" Width="300" Margin="0,0,0,20"
-                      Visibility="{Binding IsCompressingVideo, Converter={StaticResource BoolToVis}}">
+                <!-- Always visible progress for video compression -->
+                <Grid Height="25" Width="300" Margin="0,0,0,20">
                     <ProgressBar Height="25"
                                  Minimum="0"
                                  Maximum="1"
@@ -84,6 +114,7 @@
                                FontSize="14"
                                Foreground="Black" />
                 </Grid>
+
             </StackPanel>
         </Grid>
     </ScrollViewer>

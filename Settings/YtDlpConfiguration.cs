@@ -8,8 +8,14 @@ namespace UtilityApplication.Settings;
 public class DownloadConfig
 {
     public static string OutputDirectory => @"C:\Users\marci\Desktop\Playlist";
+    
     public static string FfmpegLocation => @"C:\ffmpeg-2024-12-23-git-6c9218d748-full_build\bin";
+    
     private static string CookiePath => @"C:\Users\marci\Desktop\Playlist\cookies.txt";
+    
+    public static string ToolsDirectory => Path.Combine(AppContext.BaseDirectory, "Tools");
+    
+    public static string YtDlpPath => Path.Combine(ToolsDirectory, "yt-dlp.exe");
 
     /// <summary>
     /// Ensures the output directory exists.

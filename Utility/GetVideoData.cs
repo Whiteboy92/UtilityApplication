@@ -32,5 +32,26 @@ public class GetVideoData
 
         throw new Exception("Could not retrieve video duration.");
     }
+    
+    public static async Task<string?> GetFirstDownloadedMp3FileNameAsync()
+    {
+        try
+        {
+            var firstFile = await Task.Run(() =>
+                Directory.EnumerateFiles(DownloadConfig.OutputDirectory, "*.mp3")
+                    .OrderBy(File.GetCreationTimeUtc)
+                    .FirstOrDefault());
 
+            if (firstFile != null)
+            {
+                return Path.GetFileNameWithoutExtension(firstFile);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error retrieving first downloaded video: {ex}");
+            return null;
+        }
+    }
 }

@@ -3,122 +3,92 @@ using System.IO;
 using System.Text.RegularExpressions;
 using UtilityApplication.Settings;
 
-namespace UtilityApplication.Services
+namespace UtilityApplication.Services;
+
+public class YtDlpService
 {
-    public class YtDlpService
+    private static readonly Regex SpeedRegex = new(@"at ([\d\.]+[KMG]i?B/s)", RegexOptions.IgnoreCase);
+    private static readonly Regex OutputFileRegex = new(@"\[ExtractAudio\] Destination: (.+\.mp3)", RegexOptions.IgnoreCase);
+
+    public async Task<bool> DownloadAudioAsync(string playlistUrl, int maxVideos, IProgress<int>? progress = null)
     {
-        /// <summary>
-        /// Downloads the audio files using yt-dlp with configured options.
-        /// Reports progress as the number of downloaded mp3 files in the output folder.
-        /// Logs download speed and other info from yt-dlp stdout.
-        /// </summary>
-        public async Task<bool> DownloadAudioAsync(string playlistUrl, int maxVideos, IProgress<int>? progress = null)
+        DownloadConfig.EnsureOutputDirectoryExists();
+
+        string arguments = DownloadConfig.BuildYtDlpArguments(playlistUrl, maxVideos);
+
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo
         {
-            DownloadConfig.EnsureOutputDirectoryExists();
+            FileName = DownloadConfig.YtDlpPath,
+            Arguments = arguments,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+        };
 
-            string arguments = DownloadConfig.BuildYtDlpArguments(playlistUrl, maxVideos);
+        Console.WriteLine($"Starting yt-dlp with arguments: {arguments}");
 
-            var process = new Process
+        var downloadedFiles = new HashSet<string>();
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            process.Start();
+            
+            Task stdOutTask = ReadOutputAsync(process.StandardOutput, downloadedFiles, progress);
+            Task stdErrTask = ReadErrorAsync(process.StandardError);
+
+            await Task.WhenAll(stdOutTask, stdErrTask, process.WaitForExitAsync());
+
+            sw.Stop();
+            Console.WriteLine($"yt-dlp exited with code {process.ExitCode} after {sw.Elapsed}");
+
+            return downloadedFiles.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"yt-dlp failed: {ex}");
+            return false;
+        }
+    }
+
+    private async Task ReadOutputAsync(StreamReader output, HashSet<string> fileSet, IProgress<int>? progress)
+    {
+        while (!output.EndOfStream)
+        {
+            var line = await output.ReadLineAsync();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            Console.WriteLine($"yt-dlp stdout: {line}");
+
+            var match = OutputFileRegex.Match(line);
+            if (match.Success)
             {
-                StartInfo = new ProcessStartInfo
+                var filePath = match.Groups[1].Value.Trim('"');
+                if (fileSet.Add(filePath))
                 {
-                    FileName = "yt-dlp.exe",
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                },
-                EnableRaisingEvents = true,
-            };
-
-            var sw = Stopwatch.StartNew();
-
-            try
-            {
-                Console.WriteLine($"Starting yt-dlp process with arguments: {arguments}");
-                process.Start();
-
-                // Read stderr asynchronously (log errors)
-                _ = Task.Run(async () =>
-                {
-                    while (!process.StandardError.EndOfStream)
-                    {
-                        var errLine = await process.StandardError.ReadLineAsync();
-                        if (!string.IsNullOrWhiteSpace(errLine))
-                            Console.Error.WriteLine($"yt-dlp stderr: {errLine}");
-                    }
-                });
-
-                int lastCount = 0;
-
-                // Regex to match speed info lines, e.g.:
-                // [download]  15.2% of 3.00MiB at 123.45KiB/s ETA 00:21
-                var speedRegex = new Regex(@"at ([\d\.]+[KMG]i?B/s)", RegexOptions.IgnoreCase);
-
-                // Read stdout line by line
-                _ = Task.Run(async () =>
-                {
-                    while (!process.StandardOutput.EndOfStream)
-                    {
-                        var line = await process.StandardOutput.ReadLineAsync();
-                        if (!string.IsNullOrWhiteSpace(line))
-                        {
-                            // Log full output line
-                            Console.WriteLine($"yt-dlp stdout: {line}");
-
-                            // Try to extract speed info and log it separately
-                            var speedMatch = speedRegex.Match(line);
-                            if (speedMatch.Success)
-                            {
-                                Console.WriteLine($"Download speed: {speedMatch.Groups[1].Value}");
-                            }
-                        }
-                    }
-                });
-
-                // Poll output folder for new .mp3 files until process ends
-                while (!process.HasExited)
-                {
-                    var mp3Files = Directory.GetFiles(DownloadConfig.OutputDirectory, "*.mp3");
-                    int count = mp3Files.Length;
-                    if (count != lastCount)
-                    {
-                        lastCount = count;
-                        Console.WriteLine($"Downloaded mp3 count: {count}");
-                        progress?.Report(count);
-                    }
-
-                    await Task.Delay(500); // poll every 0.5 seconds
+                    Console.WriteLine($"New MP3 file detected: {Path.GetFileName(filePath)}");
+                    progress?.Report(fileSet.Count);
                 }
-
-                // One last count after exit
-                var finalFiles = Directory.GetFiles(DownloadConfig.OutputDirectory, "*.mp3");
-                progress?.Report(finalFiles.Length);
-
-                sw.Stop();
-
-                Console.WriteLine($"yt-dlp process exited with code {process.ExitCode} after {sw.Elapsed}");
-                Console.WriteLine($"Total files downloaded: {finalFiles.Length}");
-
-                return finalFiles.Length > 0;
             }
-            catch (Exception ex)
+
+            var speedMatch = SpeedRegex.Match(line);
+            if (speedMatch.Success)
             {
-                Console.Error.WriteLine($"Exception during yt-dlp process: {ex}");
-                return false;
+                Console.WriteLine($"Speed: {speedMatch.Groups[1].Value}");
             }
-            finally
+        }
+    }
+
+    private async Task ReadErrorAsync(StreamReader error)
+    {
+        while (!error.EndOfStream)
+        {
+            var line = await error.ReadLineAsync();
+            if (!string.IsNullOrWhiteSpace(line))
             {
-                if (!process.HasExited)
-                {
-                    try
-                    {
-                        process.Kill(true);
-                    }
-                    catch { /* ignore */ }
-                }
-                process.Dispose();
+                await Console.Error.WriteLineAsync($"yt-dlp stderr: {line}");
             }
         }
     }

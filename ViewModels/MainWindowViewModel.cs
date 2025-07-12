@@ -2,9 +2,12 @@
 using System.Windows;
 using System.Windows.Input;
 using UtilityApplication.Commands;
+using UtilityApplication.DownloadHandler;
 using UtilityApplication.FileDataHandler;
 using UtilityApplication.Interfaces;
 using UtilityApplication.PhotoProcessing;
+using UtilityApplication.Settings;
+using UtilityApplication.Utility;
 using UtilityApplication.VideoProcessing;
 
 namespace UtilityApplication.ViewModels
@@ -12,6 +15,8 @@ namespace UtilityApplication.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         private readonly IUserDialogService dialogService;
+
+        #region Fields
 
         private int totalFilesToConvert = 1;
         private int processedFilesCount;
@@ -25,125 +30,182 @@ namespace UtilityApplication.ViewModels
         private bool isProcessing;
         private bool isDownloadingPlaylist;
         private bool isFixingAndTagging;
-
         private bool isCompressingVideo;
+
         private string videoCompressionProgressDisplay = string.Empty;
         private double videoCompressionProgress;
 
+        private string? firstDownloadedVideoName;
+
         private const int MaxVideos = 5;
 
-        public ICommand DownloadPlaylistCommand { get; }
+        #endregion
+
+        #region Commands
+
         public ICommand ConvertHeicToPngCommand { get; }
+        public ICommand DownloadPlaylistCommand { get; }
         public ICommand FixAndTagMp3Command { get; }
         public ICommand CompressVideoCommand { get; }
+
+        #endregion
+
+        #region Constructor
 
         public MainWindowViewModel(IUserDialogService dialogService)
         {
             this.dialogService = dialogService;
+            
+            var savedData = ApplicationData.LoadData();
+            FirstDownloadedVideoName = savedData.FirstDownloadedVideoName;
 
-            ConvertHeicToPngCommand = new RelayCommand(async () => await ConvertHeicToPngAsync(), CanExecuteConvert);
+            ConvertHeicToPngCommand = new RelayCommand(async () => await ConvertHeicToPngAsync(), CanExecuteOperations);
             DownloadPlaylistCommand = new RelayCommand(async () => await DownloadPlaylistAsync(), () => !IsBusy);
-            FixAndTagMp3Command = new RelayCommand(async () => await FixAndTagMp3Async(), CanExecuteConvert);
+            FixAndTagMp3Command = new RelayCommand(async () => await FixAndTagMp3Async(), CanExecuteOperations);
             CompressVideoCommand = new RelayCommand(async () => await CompressVideoAsync(), () => !IsBusy);
         }
 
+        #endregion
+
+        #region Properties
+
         private bool IsBusy => IsProcessing || IsDownloadingPlaylist || IsFixingAndTagging || IsCompressingVideo;
 
-        private int TotalFilesToConvert
+        // HEIC to PNG conversion progress
+        public int TotalFilesToConvert
         {
             get => totalFilesToConvert;
-            set => SetProperty(ref totalFilesToConvert, value, nameof(ConversionProgressDisplay));
+            private set => SetProperty(ref totalFilesToConvert, value, nameof(ConversionProgressDisplay));
         }
 
-        private int ProcessedFilesCount
+        public int ProcessedFilesCount
         {
             get => processedFilesCount;
-            set => SetProperty(ref processedFilesCount, value, nameof(ConversionProgressDisplay));
+            private set => SetProperty(ref processedFilesCount, value, nameof(ConversionProgressDisplay));
         }
 
         public string ConversionProgressDisplay => $"{ProcessedFilesCount} / {TotalFilesToConvert}";
 
-        private int TotalVideosToDownload
-        {
-            get => totalVideosToDownload;
-            set => SetProperty(ref totalVideosToDownload, value, nameof(DownloadProgressDisplay));
-        }
-
-        private int DownloadedVideosCount
-        {
-            get => downloadedVideos;
-            set => SetProperty(ref downloadedVideos, value, nameof(DownloadProgressDisplay));
-        }
-
-        public string DownloadProgressDisplay => $"{DownloadedVideosCount} / {TotalVideosToDownload}";
-
-        private int TotalFilesToFix
-        {
-            get => totalFilesToFix;
-            set => SetProperty(ref totalFilesToFix, value, nameof(FixFileNameProgressDisplay));
-        }
-
-        private int ProcessedFiles
-        {
-            get => processedFiles;
-            set => SetProperty(ref processedFiles, value, nameof(FixFileNameProgressDisplay));
-        }
-
-        public string FixFileNameProgressDisplay => $"{ProcessedFiles} / {TotalFilesToFix}";
-
-        private bool IsProcessing
+        public bool IsProcessing
         {
             get => isProcessing;
-            set
+            private set
             {
                 if (SetProperty(ref isProcessing, value))
                     RaiseCanExecuteChangedForCommands();
             }
         }
 
-        private bool IsDownloadingPlaylist
+        // YouTube playlist download progress
+        public int TotalVideosToDownload
+        {
+            get => totalVideosToDownload;
+            private set
+            {
+                if (SetProperty(ref totalVideosToDownload, value))
+                    OnPropertyChanged(nameof(DownloadProgressDisplay));
+            }
+        }
+
+        public int DownloadedVideosCount
+        {
+            get => downloadedVideos;
+            private set
+            {
+                if (SetProperty(ref downloadedVideos, value))
+                    OnPropertyChanged(nameof(DownloadProgressDisplay));
+            }
+        }
+        
+        public string DownloadProgressDisplay => $"{DownloadedVideosCount} / {TotalVideosToDownload}";
+
+        public bool IsDownloadingPlaylist
         {
             get => isDownloadingPlaylist;
-            set
+            private set
             {
                 if (SetProperty(ref isDownloadingPlaylist, value))
                     RaiseCanExecuteChangedForCommands();
             }
         }
+        
+        public string? FirstDownloadedVideoName
+        {
+            get => firstDownloadedVideoName;
+            private set
+            {
+                if (SetProperty(ref firstDownloadedVideoName, value))
+                {
+                    // Save updated value to disk
+                    var data = new ApplicationData.AppDataModel
+                    {
+                        FirstDownloadedVideoName = firstDownloadedVideoName,
+                    };
+                    try
+                    {
+                        ApplicationData.SaveData(data);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Failed to save app data: {ex}");
+                    }
+                }
+            }
+        }
 
-        private bool IsFixingAndTagging
+        // Fix and tag MP3 progress
+        public int TotalFilesToFix
+        {
+            get => totalFilesToFix;
+            private set => SetProperty(ref totalFilesToFix, value, nameof(FixFileNameProgressDisplay));
+        }
+
+        public int ProcessedFiles
+        {
+            get => processedFiles;
+            private set => SetProperty(ref processedFiles, value, nameof(FixFileNameProgressDisplay));
+        }
+
+        public string FixFileNameProgressDisplay => $"{ProcessedFiles} / {TotalFilesToFix}";
+
+        public bool IsFixingAndTagging
         {
             get => isFixingAndTagging;
-            set
+            private set
             {
                 if (SetProperty(ref isFixingAndTagging, value))
                     RaiseCanExecuteChangedForCommands();
             }
         }
 
-        private bool IsCompressingVideo
+        // Video compression progress
+        public string VideoCompressionProgressDisplay
+        {
+            get => videoCompressionProgressDisplay;
+            private set => SetProperty(ref videoCompressionProgressDisplay, value);
+        }
+
+        public double VideoCompressionProgress
+        {
+            get => videoCompressionProgress;
+            private set => SetProperty(ref videoCompressionProgress, value);
+        }
+
+        public bool IsCompressingVideo
         {
             get => isCompressingVideo;
-            set
+            private set
             {
                 if (SetProperty(ref isCompressingVideo, value))
                     RaiseCanExecuteChangedForCommands();
             }
         }
 
-        public string VideoCompressionProgressDisplay
-        {
-            get => videoCompressionProgressDisplay;
-            set => SetProperty(ref videoCompressionProgressDisplay, value);
-        }
+        #endregion
 
-        public double VideoCompressionProgress
-        {
-            get => videoCompressionProgress;
-            set => SetProperty(ref videoCompressionProgress, value);
-        }
+        #region Command CanExecute Helper
 
-        private bool CanExecuteConvert() => !IsBusy;
+        private bool CanExecuteOperations() => !IsBusy;
 
         private void RaiseCanExecuteChangedForCommands()
         {
@@ -152,6 +214,10 @@ namespace UtilityApplication.ViewModels
             (FixAndTagMp3Command as RelayCommand)?.RaiseCanExecuteChanged();
             (CompressVideoCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
+
+        #endregion
+
+        #region Command Implementations
 
         private async Task ConvertHeicToPngAsync()
         {
@@ -172,6 +238,7 @@ namespace UtilityApplication.ViewModels
 
             var photoProcessor = new PhotoProcessingHandler();
             var progress = new Progress<int>(count => ProcessedFilesCount = count);
+
             var (failedFiles, elapsed) = await photoProcessor.ConvertFilesAsync(files, progress);
 
             IsProcessing = false;
@@ -179,13 +246,9 @@ namespace UtilityApplication.ViewModels
             ProcessedFilesCount = 0;
 
             if (failedFiles.Any())
-            {
                 dialogService.ShowMessage("Failed to convert files:\n" + string.Join("\n", failedFiles), "Errors", MessageBoxImage.Error);
-            }
             else
-            {
                 dialogService.ShowMessage($"All files converted successfully!\nElapsed time: {elapsed}", "Success", MessageBoxImage.Information);
-            }
         }
 
         private async Task FixAndTagMp3Async()
@@ -230,39 +293,75 @@ namespace UtilityApplication.ViewModels
 
         private async Task DownloadPlaylistAsync()
         {
+            try
+            {
+                if (!TryGetVideoCountFromUser(out int count))
+                    return;
+
+                InitializeDownloadState(count);
+
+                var progress = new Progress<int>(HandleDownloadProgress);
+                var helper = new DownloadHelper(dialogService);
+                bool success = await helper.DownloadPlaylistAsync(count, progress);
+
+                dialogService.ShowMessage(
+                    success ? "Playlist downloaded successfully!" : "Failed to download playlist.",
+                    success ? "Success" : "Error",
+                    success ? MessageBoxImage.Information : MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                await Console.Error.WriteLineAsync($"Unexpected error: {ex}");
+                dialogService.ShowMessage($"An unexpected error occurred:\n{ex.Message}", "Error", MessageBoxImage.Error);
+            }
+            finally
+            {
+                ResetDownloadState();
+            }
+        }
+
+        private bool TryGetVideoCountFromUser(out int count)
+        {
+            count = 0;
             string? input = dialogService.ShowInputDialog(
                 "Enter the number of videos to download:",
                 "Download Videos",
                 MaxVideos.ToString());
 
-            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int count) || count <= 0)
+            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out count) || count <= 0)
             {
                 dialogService.ShowMessage("Invalid number entered.", "Error", MessageBoxImage.Error);
-                return;
+                return false;
             }
 
+            return true;
+        }
+
+        private void InitializeDownloadState(int count)
+        {
             TotalVideosToDownload = count;
             DownloadedVideosCount = 0;
+            FirstDownloadedVideoName = null;
             IsDownloadingPlaylist = true;
+        }
 
-            var handler = new DownloadHandler.DownloadHandler();
-            var progress = new Progress<int>(p => DownloadedVideosCount = p);
-
-            bool success = await handler.DownloadPlaylistAsync(
-                "https://www.youtube.com/watch?v=pSyUBkOEJVs&list=PL2ApIZPouz9z7l2PO0ju8X7sZBO6bUMPc",
-                count,
-                progress);
-
-            IsDownloadingPlaylist = false;
-
-            dialogService.ShowMessage(
-                success ? "Playlist downloaded successfully!" : "Failed to download playlist.",
-                success ? "Success" : "Error",
-                success ? MessageBoxImage.Information : MessageBoxImage.Error);
-
+        private void ResetDownloadState()
+        {
             TotalVideosToDownload = 1;
             DownloadedVideosCount = 0;
+            IsDownloadingPlaylist = false;
         }
+
+        private void HandleDownloadProgress(int progressValue)
+        {
+            DownloadedVideosCount = progressValue;
+
+            if (progressValue == 1 && string.IsNullOrEmpty(FirstDownloadedVideoName))
+            {
+                _ = UpdateFirstDownloadedVideoNameAsync();
+            }
+        }
+
 
         private async Task CompressVideoAsync()
         {
@@ -279,7 +378,7 @@ namespace UtilityApplication.ViewModels
 
             var progress = new Progress<double>(p =>
             {
-                VideoCompressionProgress = p; // 0.0-1.0 for ProgressBar.Value binding (0-100)
+                VideoCompressionProgress = p;
                 VideoCompressionProgressDisplay = $"Compressing... {(p * 100):F1}%";
             });
 
@@ -287,6 +386,7 @@ namespace UtilityApplication.ViewModels
             {
                 var handler = new VideoProcessingHandler();
                 await handler.CompressMp4WithProgressAsync(inputFile, outputFile, progress);
+
                 VideoCompressionProgressDisplay = "Compression complete!";
                 VideoCompressionProgress = 1;
             }
@@ -302,5 +402,17 @@ namespace UtilityApplication.ViewModels
             VideoCompressionProgressDisplay = string.Empty;
             VideoCompressionProgress = 0;
         }
+
+        #endregion
+
+        private async Task UpdateFirstDownloadedVideoNameAsync()
+        {
+            var fileName = await GetVideoData.GetFirstDownloadedMp3FileNameAsync();
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                FirstDownloadedVideoName = fileName;
+            }
+        }
+
     }
 }
