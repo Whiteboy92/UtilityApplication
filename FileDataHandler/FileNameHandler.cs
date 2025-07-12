@@ -19,6 +19,10 @@ public static partial class FileNameFormatter
         @"\(\s*Visualizer\s*\)",
         @"\(\s*Audio\s*\)",
         @"\(\s*HD\s*\)",
+        @"\(\s*Hardstyle\s*\)",
+        @"\(\s*frenchcore\s*\)",
+        @"french\s*core",
+        "\"",
     ];
 
     /// <summary>
