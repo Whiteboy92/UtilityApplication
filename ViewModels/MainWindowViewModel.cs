@@ -56,7 +56,7 @@ namespace UtilityApplication.ViewModels
         {
             this.dialogService = dialogService;
             
-            var savedData = ApplicationData.LoadData();
+            var savedData = ApplicationData.ApplicationData.LoadData();
             FirstDownloadedVideoName = savedData.FirstDownloadedVideoName;
 
             ConvertHeicToPngCommand = new RelayCommand(async () => await ConvertHeicToPngAsync(), CanExecuteOperations);
@@ -137,13 +137,13 @@ namespace UtilityApplication.ViewModels
                 if (SetProperty(ref firstDownloadedVideoName, value))
                 {
                     // Save updated value to disk
-                    var data = new ApplicationData.AppDataModel
+                    var data = new ApplicationData.ApplicationData.AppDataModel
                     {
                         FirstDownloadedVideoName = firstDownloadedVideoName,
                     };
                     try
                     {
-                        ApplicationData.SaveData(data);
+                        ApplicationData.ApplicationData.SaveData(data);
                     }
                     catch (Exception ex)
                     {
@@ -303,6 +303,11 @@ namespace UtilityApplication.ViewModels
                 var progress = new Progress<int>(HandleDownloadProgress);
                 var helper = new DownloadHelper(dialogService);
                 bool success = await helper.DownloadPlaylistAsync(count, progress);
+                
+                if (success)
+                {
+                    await UpdateFirstDownloadedVideoNameAsync();
+                }
 
                 dialogService.ShowMessage(
                     success ? "Playlist downloaded successfully!" : "Failed to download playlist.",
@@ -352,16 +357,27 @@ namespace UtilityApplication.ViewModels
             IsDownloadingPlaylist = false;
         }
 
-        private void HandleDownloadProgress(int progressValue)
+        private async void HandleDownloadProgress(int progressValue)
         {
-            DownloadedVideosCount = progressValue;
-
-            if (progressValue == 1 && string.IsNullOrEmpty(FirstDownloadedVideoName))
+            try
             {
-                _ = UpdateFirstDownloadedVideoNameAsync();
+                DownloadedVideosCount = progressValue;
+
+                if (progressValue == 1 && string.IsNullOrEmpty(FirstDownloadedVideoName))
+                {
+                    await UpdateFirstDownloadedVideoNameAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                await Console.Error.WriteLineAsync($"Error in HandleDownloadProgress: {ex}");
+
+                dialogService.ShowMessage(
+                    $"An error occurred while processing the download progress:\n{ex.Message}",
+                    "Progress Error",
+                    MessageBoxImage.Warning);
             }
         }
-
 
         private async Task CompressVideoAsync()
         {

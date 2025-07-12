@@ -1,8 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 
-namespace UtilityApplication.Utility
+namespace UtilityApplication.ApplicationData
 {
     public static class ApplicationData
     {
