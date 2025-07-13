@@ -6,7 +6,7 @@
         Title="Utility App"
         MinHeight="400" MinWidth="400"
         Height="400" Width="400"
-        Background="#444444"
+        Background="Transparent"
         WindowStyle="None"
         AllowsTransparency="True"
         ResizeMode="CanResizeWithGrip">
@@ -15,28 +15,31 @@
         <utility:BoolToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Grid>
-        <!-- Define two rows: title bar height and the rest -->
-        <Grid.RowDefinitions>
-            <RowDefinition Height="30"/> <!-- Height of custom title bar -->
-            <RowDefinition Height="*"/>  <!-- Remaining space -->
-        </Grid.RowDefinitions>
+    <!-- Outer border -->
+    <Border BorderBrush="#000000" BorderThickness="2" Background="#444444" CornerRadius="2">
+        <Grid>
+            <!-- Define two rows: title bar height and the rest -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/> <!-- Title bar -->
+                <RowDefinition Height="*"/>  <!-- Main content -->
+            </Grid.RowDefinitions>
 
-        <!-- TitleBar UserControl in the first row -->
-        <views:TitleBar 
-            Grid.Row="0" 
-            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <!-- Custom Title Bar -->
+            <views:TitleBar 
+                Grid.Row="0" 
+                Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
 
-        <!-- Main Content in second row -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
-                    <views:HeicToPngSection />
-                    <views:PlaylistDownloadSection />
-                    <views:Mp3FixSection />
-                    <views:VideoCompressionSection />
-                </StackPanel>
-            </Grid>
-        </ScrollViewer>
-    </Grid>
+            <!-- Main Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
+                        <views:HeicToPngSection />
+                        <views:PlaylistDownloadSection />
+                        <views:Mp3FixSection />
+                        <views:VideoCompressionSection />
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </Window>

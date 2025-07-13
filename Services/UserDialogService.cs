@@ -51,8 +51,8 @@ namespace UtilityApplication.Services
                 Owner = Application.Current?.MainWindow,
                 Background = (Brush)new BrushConverter().ConvertFromString("#444444")!,
                 AllowsTransparency = false,
-                BorderBrush = Brushes.White,
-                BorderThickness = new Thickness(1),
+                BorderBrush = Brushes.Black,
+                BorderThickness = new Thickness(2),
             };
 
             if (Application.Current != null)
@@ -105,7 +105,6 @@ namespace UtilityApplication.Services
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-
 
             var okButton = new Button
             {
