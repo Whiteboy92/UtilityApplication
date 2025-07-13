@@ -332,6 +332,11 @@ namespace UtilityApplication.ViewModels
                 "Download Videos",
                 MaxVideos.ToString());
 
+            if (input == null)
+            {
+                return false;
+            }
+
             if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out count) || count <= 0)
             {
                 dialogService.ShowMessage("Invalid number entered.", "Error", MessageBoxImage.Error);
