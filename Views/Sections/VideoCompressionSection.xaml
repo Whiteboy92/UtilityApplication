@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="UtilityApplication.Views.Sections.VideoCompressionSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="300">
+    <StackPanel>
+        <Button Content="Compress MP4 Video"
+                Command="{Binding CompressVideoCommand}"
+                Height="30" />
+
+        <Grid Height="25" Width="300" Margin="0,0,0,20">
+            <ProgressBar Height="25"
+                         Minimum="0"
+                         Maximum="1"
+                         Value="{Binding VideoCompressionProgress, Mode=OneWay}" />
+            <TextBlock Text="{Binding VideoCompressionProgressDisplay}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       Foreground="Black" />
+        </Grid>
+    </StackPanel>
+</UserControl>

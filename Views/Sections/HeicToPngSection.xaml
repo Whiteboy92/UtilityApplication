@@ -1,0 +1,20 @@
+﻿<UserControl x:Class="UtilityApplication.Views.Sections.HeicToPngSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="300">
+    <StackPanel>
+        <Button Content="Convert HEIC to PNG"
+                Command="{Binding ConvertHeicToPngCommand}"
+                Height="30" />
+
+        <Grid Height="25" Width="300" Margin="0,0,0,20">
+            <ProgressBar Height="25"
+                         Minimum="0"
+                         Maximum="{Binding TotalFilesToConvert, Mode=OneWay}"
+                         Value="{Binding ProcessedFilesCount, Mode=OneWay}"/>
+            <TextBlock Text="{Binding ConversionProgressDisplay}"
+                       HorizontalAlignment="Center"
+                       FontSize="14" />
+        </Grid>
+    </StackPanel>
+</UserControl>

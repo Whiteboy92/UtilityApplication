@@ -6,7 +6,6 @@ using UtilityApplication.DownloadHandler;
 using UtilityApplication.FileDataHandler;
 using UtilityApplication.Interfaces;
 using UtilityApplication.PhotoProcessing;
-using UtilityApplication.Settings;
 using UtilityApplication.Utility;
 using UtilityApplication.VideoProcessing;
 

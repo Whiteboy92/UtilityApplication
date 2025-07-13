@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="UtilityApplication.Views.Sections.Mp3FixSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="300">
+    <StackPanel>
+        <Button Content="Fix File Names And Tag MP3s"
+                Command="{Binding FixAndTagMp3Command}"
+                Height="30" />
+
+        <Grid Height="25" Width="300" Margin="0,0,0,20">
+            <ProgressBar Height="25"
+                         Minimum="0"
+                         Maximum="{Binding TotalFilesToFix}"
+                         Value="{Binding ProcessedFiles, Mode=OneWay}" />
+            <TextBlock Text="{Binding FixFileNameProgressDisplay}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       Foreground="Black" />
+        </Grid>
+    </StackPanel>
+</UserControl>
