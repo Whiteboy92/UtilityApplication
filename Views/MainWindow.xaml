@@ -22,8 +22,10 @@
             <RowDefinition Height="*"/>  <!-- Remaining space -->
         </Grid.RowDefinitions>
 
-        <!-- TitleBar UserControl in first row -->
-        <views:TitleBar Grid.Row="0"/>
+        <!-- TitleBar UserControl in the first row -->
+        <views:TitleBar 
+            Grid.Row="0" 
+            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
 
         <!-- Main Content in second row -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

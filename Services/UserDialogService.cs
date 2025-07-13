@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using UtilityApplication.Interfaces;
+using UtilityApplication.Views.Sections;
 
 namespace UtilityApplication.Services
 {
@@ -22,7 +24,7 @@ namespace UtilityApplication.Services
 
             return dialog.ShowDialog() == true ? dialog.SelectedPath : null;
         }
-        
+
         public string? SelectFile(string title, string filter)
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
@@ -42,45 +44,102 @@ namespace UtilityApplication.Services
             {
                 Title = title,
                 Width = 350,
-                Height = 150,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ResizeMode = ResizeMode.NoResize,
-                WindowStyle = WindowStyle.ToolWindow,
+                WindowStyle = WindowStyle.None,
                 Owner = Application.Current?.MainWindow,
+                Background = (Brush)new BrushConverter().ConvertFromString("#444444")!,
+                AllowsTransparency = false,
+                BorderBrush = Brushes.White,
+                BorderThickness = new Thickness(1),
             };
 
-            var stackPanel = new StackPanel { Margin = new Thickness(10) };
+            if (Application.Current != null)
+            {
+                foreach (var dict in Application.Current.Resources.MergedDictionaries)
+                {
+                    window.Resources.MergedDictionaries.Add(dict);
+                }
+            }
 
-            var textBlock = new TextBlock { Text = message, Margin = new Thickness(0, 0, 0, 10) };
-            var textBox = new TextBox { Text = defaultValue, Margin = new Thickness(0, 0, 0, 10) };
-            textBox.Focus();
-            textBox.SelectAll();
+            var rootGrid = new Grid();
+            rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
+            rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            
+            var titleBar = new TitleBar
+            {
+                Title = title,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Top,
+                Height = 30,
+            };
+            Grid.SetRow(titleBar, 0);
+            
+            var contentPanel = new StackPanel { Margin = new Thickness(16) };
+            Grid.SetRow(contentPanel, 1);
 
-            var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            var okButton = new Button { Content = "OK", Width = 75, IsDefault = true };
-            var cancelButton = new Button { Content = "Cancel", Width = 75, Margin = new Thickness(10, 0, 0, 0), IsCancel = true };
+            var messageText = new TextBlock
+            {
+                Text = message,
+                Margin = new Thickness(0, 0, 0, 10),
+                FontSize = 14,
+                Foreground = Brushes.White,
+            };
+            
+            var inputBox = new TextBox
+            {
+                Text = defaultValue,
+                Margin = new Thickness(0, 0, 0, 16),
+                Style = (Style?)Application.Current?.FindResource("MaterialDesignOutlinedTextBox"),
+                Foreground = Brushes.White,
+                FontSize = 14,
+                Background = (Brush)new BrushConverter().ConvertFromString("#555555")!,
+            };
+            inputBox.Focus();
+            inputBox.SelectAll();
 
+            var buttonsPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+
+            var okButton = new Button
+            {
+                Content = "OK",
+                Width = 80,
+                IsDefault = true,
+                Style = (Style?)Application.Current?.FindResource("MaterialDesignOutlinedButton"),
+                Margin = new Thickness(0),
+            };
             okButton.Click += (_, _) => window.DialogResult = true;
+
+            var cancelButton = new Button
+            {
+                Content = "Cancel",
+                Width = 80,
+                IsCancel = true,
+                Style = (Style?)Application.Current?.FindResource("MaterialDesignOutlinedButton"),
+                Margin = new Thickness(10, 0, 0, 0),
+            };
             cancelButton.Click += (_, _) => window.DialogResult = false;
 
-            buttonPanel.Children.Add(okButton);
-            buttonPanel.Children.Add(cancelButton);
+            buttonsPanel.Children.Add(okButton);
+            buttonsPanel.Children.Add(cancelButton);
 
-            stackPanel.Children.Add(textBlock);
-            stackPanel.Children.Add(textBox);
-            stackPanel.Children.Add(buttonPanel);
+            contentPanel.Children.Add(messageText);
+            contentPanel.Children.Add(inputBox);
+            contentPanel.Children.Add(buttonsPanel);
 
-            window.Content = stackPanel;
+            rootGrid.Children.Add(titleBar);
+            rootGrid.Children.Add(contentPanel);
 
-            bool? result = window.ShowDialog();
-            if (result == true)
-            {
-                return textBox.Text;
-            }
-            else
-            {
-                return null;
-            }
+            window.Content = rootGrid;
+
+            return window.ShowDialog() == true ? inputBox.Text : null;
         }
     }
 }

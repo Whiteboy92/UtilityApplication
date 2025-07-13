@@ -329,7 +329,7 @@ namespace UtilityApplication.ViewModels
             count = 0;
             string? input = dialogService.ShowInputDialog(
                 "Enter the number of videos to download:",
-                "Download Videos",
+                "Download Videos Count",
                 MaxVideos.ToString());
 
             if (input == null)

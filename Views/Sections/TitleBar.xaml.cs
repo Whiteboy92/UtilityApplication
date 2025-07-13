@@ -1,24 +1,32 @@
 ﻿using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace UtilityApplication.Views.Sections
 {
-    public partial class TitleBar : UserControl
+    public partial class TitleBar
     {
         public TitleBar()
         {
             InitializeComponent();
         }
 
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        // DependencyProperty to bind title text
+        public static readonly DependencyProperty TitleProperty =
+            DependencyProperty.Register(nameof(Title), typeof(string), typeof(TitleBar), new PropertyMetadata(""));
+
+        public string Title
         {
-            if (e.ButtonState == MouseButtonState.Pressed)
-            {
-                Window.GetWindow(this)?.DragMove();
-            }
+            get => (string)GetValue(TitleProperty);
+            set => SetValue(TitleProperty, value);
         }
 
+        // Raise dragging on TextBlock mouse down
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Window.GetWindow(this)?.DragMove();
+        }
+
+        // Button click handlers for minimize, maximize/restore, close:
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
             Window.GetWindow(this)!.WindowState = WindowState.Minimized;
@@ -26,14 +34,14 @@ namespace UtilityApplication.Views.Sections
 
         private void MaximizeRestoreButton_Click(object sender, RoutedEventArgs e)
         {
-            var window = Window.GetWindow(this);
-            if (window != null)
-                window.WindowState = window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            var window = Window.GetWindow(this)!;
+            window.WindowState = window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            Window.GetWindow(this)?.Close();
+            var window = Window.GetWindow(this)!;
+            window.Close();
         }
     }
 }

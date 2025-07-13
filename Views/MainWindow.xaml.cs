@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Input;
 using UtilityApplication.Services;
 
 namespace UtilityApplication.Views

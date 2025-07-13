@@ -66,7 +66,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Title Text -->
-            <TextBlock Text="Utility App"
+            <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=UserControl}}"
                        VerticalAlignment="Center"
                        Foreground="White"
                        FontWeight="SemiBold"
