@@ -3,22 +3,38 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:UtilityApplication.Views.Sections"
         xmlns:utility="clr-namespace:UtilityApplication.Utility"
-        Title="Utility App" Height="400" Width="400">
+        Title="Utility App"
+        MinHeight="400" MinWidth="400"
+        Height="400" Width="400"
+        Background="#444444"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="CanResizeWithGrip">
 
     <Window.Resources>
         <utility:BoolToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="10">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
+    <Grid>
+        <!-- Define two rows: title bar height and the rest -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/> <!-- Height of custom title bar -->
+            <RowDefinition Height="*"/>  <!-- Remaining space -->
+        </Grid.RowDefinitions>
 
-                <views:HeicToPngSection />
-                <views:PlaylistDownloadSection />
-                <views:Mp3FixSection />
-                <views:VideoCompressionSection />
+        <!-- TitleBar UserControl in first row -->
+        <views:TitleBar Grid.Row="0"/>
 
-            </StackPanel>
-        </Grid>
-    </ScrollViewer>
+        <!-- Main Content in second row -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
+                    <views:HeicToPngSection />
+                    <views:PlaylistDownloadSection />
+                    <views:Mp3FixSection />
+                    <views:VideoCompressionSection />
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </Window>

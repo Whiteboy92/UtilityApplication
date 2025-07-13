@@ -46,7 +46,7 @@
                        VerticalAlignment="Center"
                        FontSize="14"
                        FontStyle="Italic"
-                       Foreground="Gray"
+                       Foreground="White"
                        Style="{StaticResource VisibleWhenNotDownloadingTextBlock}" />
         </Grid>
     </StackPanel>
