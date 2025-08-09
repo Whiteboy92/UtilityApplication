@@ -238,7 +238,9 @@ namespace UtilityApplication.ViewModels
             var photoProcessor = new PhotoProcessingHandler();
             var progress = new Progress<int>(count => ProcessedFilesCount = count);
 
-            var (failedFiles, elapsed) = await photoProcessor.ConvertFilesAsync(files, progress);
+            var maxConcurrency = Environment.ProcessorCount;
+
+            var (failedFiles, elapsed) = await photoProcessor.ConvertFilesAsync(folder, progress, maxConcurrency);
 
             IsProcessing = false;
             TotalFilesToConvert = 1;
